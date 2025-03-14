@@ -5,6 +5,7 @@ import pandas as pd
 
 def show_buckets_page():
     st.header("Money Buckets")
+    user_id = st.session_state.user['id']
 
     # Add new bucket
     with st.form("add_bucket"):
@@ -18,12 +19,12 @@ def show_buckets_page():
         submitted = st.form_submit_button("Add Bucket")
 
         if submitted and bucket_name:
-            db.add_bucket(bucket_name, amount, bucket_type)
+            db.add_bucket(user_id, bucket_name, amount, bucket_type)
             st.success(f"Added {bucket_name} bucket!")
             st.rerun()
 
     # Display existing buckets
-    buckets_df = db.get_buckets()
+    buckets_df = db.get_buckets(user_id)
 
     if not buckets_df.empty:
         # Show buckets table
@@ -42,7 +43,7 @@ def show_buckets_page():
                     format="%.2f"
                 )
                 if new_amount != row['amount']:
-                    db.update_bucket(row['id'], new_amount)
+                    db.update_bucket(row['id'], new_amount, user_id)
                     st.rerun()
             with col4:
                 st.write(f"${row['amount']:,.2f}")

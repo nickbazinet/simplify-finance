@@ -7,6 +7,7 @@ import pandas as pd
 
 def show_expenses_page():
     st.header("Monthly Expenses")
+    user_id = st.session_state.user['id']
 
     # Date selection with valid format
     date = st.date_input(
@@ -33,7 +34,7 @@ def show_expenses_page():
             submitted = st.form_submit_button("Add Expense")
 
             if submitted:
-                db.add_expense(category, amount, expense_date, description)
+                db.add_expense(user_id, category, amount, expense_date, description)
                 st.success("Expense added!")
                 st.rerun()
 
@@ -50,14 +51,14 @@ def show_expenses_page():
             budget_submitted = st.form_submit_button("Set Budget")
 
             if budget_submitted:
-                db.set_budget(budget_category, budget_amount, selected_month)
+                db.set_budget(user_id, budget_category, budget_amount, selected_month)
                 st.success("Budget set!")
                 st.rerun()
 
     # Analysis Tab
     with tab3:
-        expenses_df = db.get_expenses(selected_month)
-        budget_df = db.get_budget(selected_month)
+        expenses_df = db.get_expenses(user_id, selected_month)
+        budget_df = db.get_budget(user_id, selected_month)
 
         if not expenses_df.empty:
             st.subheader("Monthly Expenses Analysis")
