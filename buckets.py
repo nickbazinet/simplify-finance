@@ -12,7 +12,7 @@ def show_buckets_page():
         bucket_name = st.text_input("Bucket Name")
         bucket_type = st.selectbox(
             "Bucket Type",
-            ["RRSP", "TFSA", "Cash", "Crypto"]
+            ["RRSP", "TFSA", "Cash", "Crypto", "Non-Registered"]
         )
         amount = st.number_input("Amount", min_value=0.0, format="%.2f")
         submitted = st.form_submit_button("Add Bucket")
