@@ -4,16 +4,21 @@ import database as db
 def init_session_state():
     if 'user' not in st.session_state:
         st.session_state.user = None
+    if 'show_register' not in st.session_state:
+        st.session_state.show_register = False
+
+def toggle_register():
+    st.session_state.show_register = not st.session_state.show_register
 
 def show_login_page():
     st.title("Welcome to Personal Finance Manager")
-    
+
     # Login form
     with st.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Login")
-        
+
         if submitted:
             user = db.verify_user(username, password)
             if user:
@@ -22,28 +27,34 @@ def show_login_page():
                 st.rerun()
             else:
                 st.error("Invalid username or password")
-    
+
+    # Registration toggle button
+    st.button("New User? Register Here", on_click=toggle_register)
+
     # Registration section
-    st.markdown("---")
-    st.subheader("New User? Register Here")
-    
-    with st.form("register_form"):
-        new_username = st.text_input("Choose Username")
-        new_email = st.text_input("Email")
-        new_password = st.text_input("Choose Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
-        register_submitted = st.form_submit_button("Register")
-        
-        if register_submitted:
-            if new_password != confirm_password:
-                st.error("Passwords do not match")
-            elif not new_username or not new_email or not new_password:
-                st.error("Please fill all fields")
-            else:
-                if db.create_user(new_username, new_password, new_email):
-                    st.success("Registration successful! Please login.")
+    if st.session_state.show_register:
+        st.markdown("---")
+        st.subheader("Register New Account")
+
+        with st.form("register_form"):
+            new_username = st.text_input("Choose Username")
+            new_email = st.text_input("Email")
+            new_password = st.text_input("Choose Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            register_submitted = st.form_submit_button("Register")
+
+            if register_submitted:
+                if new_password != confirm_password:
+                    st.error("Passwords do not match")
+                elif not new_username or not new_email or not new_password:
+                    st.error("Please fill all fields")
                 else:
-                    st.error("Username or email already exists")
+                    if db.create_user(new_username, new_password, new_email):
+                        st.success("Registration successful! Please login.")
+                        st.session_state.show_register = False  # Hide registration form after successful registration
+                        st.rerun() # Rerun to reflect changes
+                    else:
+                        st.error("Username or email already exists")
 
 def show_logout_button():
     if st.sidebar.button("Logout"):
