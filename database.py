@@ -10,16 +10,17 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     c = conn.cursor()
-    
-    # Create buckets table
+
+    # Create buckets table with type column
     c.execute('''
         CREATE TABLE IF NOT EXISTS buckets
         (id INTEGER PRIMARY KEY AUTOINCREMENT,
          name TEXT NOT NULL,
          amount REAL NOT NULL,
+         type TEXT NOT NULL,
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
     ''')
-    
+
     # Create expenses table
     c.execute('''
         CREATE TABLE IF NOT EXISTS expenses
@@ -29,7 +30,7 @@ def init_db():
          date DATE NOT NULL,
          description TEXT)
     ''')
-    
+
     # Create budget table
     c.execute('''
         CREATE TABLE IF NOT EXISTS budget
@@ -38,15 +39,16 @@ def init_db():
          amount REAL NOT NULL,
          month DATE NOT NULL)
     ''')
-    
+
     conn.commit()
     conn.close()
 
 # Bucket operations
-def add_bucket(name, amount):
+def add_bucket(name, amount, bucket_type):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute('INSERT INTO buckets (name, amount) VALUES (?, ?)', (name, amount))
+    c.execute('INSERT INTO buckets (name, amount, type) VALUES (?, ?, ?)', 
+              (name, amount, bucket_type))
     conn.commit()
     conn.close()
 
