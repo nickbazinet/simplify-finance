@@ -2,6 +2,7 @@ import streamlit as st
 import buckets
 import expenses
 import auth
+import financial_health
 
 st.set_page_config(
     page_title="Personal Finance Manager",
@@ -24,13 +25,15 @@ def main():
         # Navigation
         page = st.sidebar.radio(
             "Navigate to",
-            ["Money Buckets", "Monthly Expenses"]
+            ["Money Buckets", "Monthly Expenses", "Financial Health Score"]
         )
 
         if page == "Money Buckets":
             buckets.show_buckets_page()
-        else:
+        elif page == "Monthly Expenses":
             expenses.show_expenses_page()
+        else:
+            financial_health.show_health_score_page()
 
 if __name__ == "__main__":
     main()
