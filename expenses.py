@@ -7,17 +7,18 @@ import pandas as pd
 
 def show_expenses_page():
     st.header("Monthly Expenses")
-    
-    # Date selection
-    selected_month = st.date_input(
+
+    # Date selection with valid format
+    date = st.date_input(
         "Select Month",
         value=datetime.today(),
-        format="YYYY-MM"
-    ).strftime("%Y-%m")
-    
+        format="YYYY/MM/DD"  # Using supported format
+    )
+    selected_month = date.strftime("%Y-%m")
+
     # Tabs for different sections
     tab1, tab2, tab3 = st.tabs(["Add Expense", "Set Budget", "Analysis"])
-    
+
     # Add Expense Tab
     with tab1:
         with st.form("add_expense"):
@@ -27,15 +28,15 @@ def show_expenses_page():
                 ["Housing", "Transportation", "Food", "Utilities", "Entertainment", "Other"]
             )
             amount = st.number_input("Amount", min_value=0.0, format="%.2f")
-            date = st.date_input("Date")
+            expense_date = st.date_input("Date", value=date)
             description = st.text_input("Description")
             submitted = st.form_submit_button("Add Expense")
-            
+
             if submitted:
-                db.add_expense(category, amount, date, description)
+                db.add_expense(category, amount, expense_date, description)
                 st.success("Expense added!")
                 st.rerun()
-    
+
     # Set Budget Tab
     with tab2:
         with st.form("set_budget"):
@@ -47,22 +48,22 @@ def show_expenses_page():
             )
             budget_amount = st.number_input("Budget Amount", min_value=0.0, format="%.2f", key="budget_amount")
             budget_submitted = st.form_submit_button("Set Budget")
-            
+
             if budget_submitted:
                 db.set_budget(budget_category, budget_amount, selected_month)
                 st.success("Budget set!")
                 st.rerun()
-    
+
     # Analysis Tab
     with tab3:
         expenses_df = db.get_expenses(selected_month)
         budget_df = db.get_budget(selected_month)
-        
+
         if not expenses_df.empty:
             # Monthly spending by category
             st.subheader("Monthly Spending by Category")
             expense_by_category = expenses_df.groupby('category')['amount'].sum().reset_index()
-            
+
             # Compare with budget
             if not budget_df.empty:
                 budget_vs_actual = expense_by_category.merge(
@@ -71,14 +72,14 @@ def show_expenses_page():
                     how='outer',
                     suffixes=('_actual', '_budget')
                 ).fillna(0)
-                
+
                 fig = go.Figure(data=[
                     go.Bar(name='Actual', x=budget_vs_actual['category'], y=budget_vs_actual['amount_actual']),
                     go.Bar(name='Budget', x=budget_vs_actual['category'], y=budget_vs_actual['amount_budget'])
                 ])
                 fig.update_layout(barmode='group', title='Budget vs Actual Spending')
                 st.plotly_chart(fig)
-                
+
                 # Budget analysis
                 st.subheader("Budget Analysis")
                 for _, row in budget_vs_actual.iterrows():
@@ -92,7 +93,7 @@ def show_expenses_page():
                             st.warning(f"Over budget by ${actual - budget:,.2f}")
                         else:
                             st.success(f"Under budget by ${budget - actual:,.2f}")
-            
+
             # Expense timeline
             st.subheader("Daily Expenses Timeline")
             expenses_df['date'] = pd.to_datetime(expenses_df['date'])
@@ -103,7 +104,7 @@ def show_expenses_page():
                 title='Daily Spending Pattern'
             )
             st.plotly_chart(fig)
-            
+
             # Summary statistics
             total_spent = expenses_df['amount'].sum()
             st.metric("Total Spent This Month", f"${total_spent:,.2f}")
