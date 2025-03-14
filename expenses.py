@@ -60,53 +60,68 @@ def show_expenses_page():
         budget_df = db.get_budget(selected_month)
 
         if not expenses_df.empty:
-            # Monthly spending by category
-            st.subheader("Monthly Spending by Category")
-            expense_by_category = expenses_df.groupby('category')['amount'].sum().reset_index()
+            st.subheader("Monthly Expenses Analysis")
 
-            # Compare with budget
+            # Group expenses by category
+            expense_by_category = expenses_df.groupby('category').agg({
+                'amount': ['sum', 'count']
+            }).reset_index()
+            expense_by_category.columns = ['category', 'total_amount', 'transaction_count']
+
+            # Merge with budget data
             if not budget_df.empty:
-                budget_vs_actual = expense_by_category.merge(
+                analysis_df = expense_by_category.merge(
                     budget_df[['category', 'amount']],
                     on='category',
                     how='outer',
-                    suffixes=('_actual', '_budget')
+                    suffixes=('_spent', '_budget')
                 ).fillna(0)
 
-                fig = go.Figure(data=[
-                    go.Bar(name='Actual', x=budget_vs_actual['category'], y=budget_vs_actual['amount_actual']),
-                    go.Bar(name='Budget', x=budget_vs_actual['category'], y=budget_vs_actual['amount_budget'])
-                ])
-                fig.update_layout(barmode='group', title='Budget vs Actual Spending')
-                st.plotly_chart(fig)
+                # Calculate percentages and remaining budget
+                analysis_df['budget_used_percent'] = (analysis_df['total_amount'] / analysis_df['amount']) * 100
+                analysis_df['remaining_budget'] = analysis_df['amount'] - analysis_df['total_amount']
 
-                # Budget analysis
-                st.subheader("Budget Analysis")
-                for _, row in budget_vs_actual.iterrows():
-                    actual = row['amount_actual']
-                    budget = row['amount_budget']
-                    if budget > 0:
-                        percentage = (actual / budget) * 100
-                        st.write(f"{row['category']}:")
-                        st.progress(min(percentage, 100) / 100)
-                        if actual > budget:
-                            st.warning(f"Over budget by ${actual - budget:,.2f}")
-                        else:
-                            st.success(f"Under budget by ${budget - actual:,.2f}")
+                # Display summary table
+                st.write("Summary by Category:")
+                summary_df = pd.DataFrame({
+                    'Category': analysis_df['category'],
+                    'Total Spent': analysis_df['total_amount'].map('${:,.2f}'.format),
+                    'Budget': analysis_df['amount'].map('${:,.2f}'.format),
+                    'Remaining': analysis_df['remaining_budget'].map('${:,.2f}'.format),
+                    'Budget Used': analysis_df['budget_used_percent'].map('{:.1f}%'.format),
+                    'Transactions': analysis_df['transaction_count'].map('{:,.0f}'.format)
+                })
+                st.dataframe(
+                    summary_df,
+                    hide_index=True,
+                    use_container_width=True
+                )
 
-            # Expense timeline
-            st.subheader("Daily Expenses Timeline")
-            expenses_df['date'] = pd.to_datetime(expenses_df['date'])
-            fig = px.line(
-                expenses_df.groupby('date')['amount'].sum().reset_index(),
-                x='date',
-                y='amount',
-                title='Daily Spending Pattern'
+            # Display detailed expenses
+            st.write("Detailed Expenses:")
+            expenses_df['date'] = pd.to_datetime(expenses_df['date']).dt.strftime('%Y-%m-%d')
+            detailed_df = pd.DataFrame({
+                'Date': expenses_df['date'],
+                'Category': expenses_df['category'],
+                'Description': expenses_df['description'],
+                'Amount': expenses_df['amount'].map('${:,.2f}'.format)
+            })
+            st.dataframe(
+                detailed_df.sort_values('Date', ascending=False),
+                hide_index=True,
+                use_container_width=True
             )
-            st.plotly_chart(fig)
 
             # Summary statistics
             total_spent = expenses_df['amount'].sum()
-            st.metric("Total Spent This Month", f"${total_spent:,.2f}")
+            total_budget = budget_df['amount'].sum() if not budget_df.empty else 0
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Spent", f"${total_spent:,.2f}")
+            with col2:
+                st.metric("Total Budget", f"${total_budget:,.2f}")
+            with col3:
+                remaining = total_budget - total_spent
+                st.metric("Remaining Budget", f"${remaining:,.2f}")
         else:
             st.info("No expenses recorded for this month yet.")
