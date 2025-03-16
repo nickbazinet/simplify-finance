@@ -49,7 +49,7 @@ def init_db():
          FOREIGN KEY (user_id) REFERENCES users (id))
     ''')
 
-    # Drop and recreate budget table without month field
+    # Drop and recreate budget table
     c.execute('DROP TABLE IF EXISTS budget')
     c.execute('''
         CREATE TABLE IF NOT EXISTS budget
@@ -61,7 +61,9 @@ def init_db():
          FOREIGN KEY (user_id) REFERENCES users (id))
     ''')
 
-    # Create goals table
+    # Drop and recreate goals table without current_amount
+    c.execute('DROP TABLE IF EXISTS goal_buckets')
+    c.execute('DROP TABLE IF EXISTS goals')
     c.execute('''
         CREATE TABLE IF NOT EXISTS goals
         (id INTEGER PRIMARY KEY AUTOINCREMENT,
