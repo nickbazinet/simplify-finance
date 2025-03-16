@@ -59,16 +59,6 @@ def show_buckets_page():
         )
         st.plotly_chart(fig)
 
-        # Distribution pie chart by bucket
-        st.subheader("Money Distribution by Bucket")
-        fig = px.pie(
-            buckets_df,
-            values='amount',
-            names='name',
-            title='Distribution of Money Across Buckets'
-        )
-        st.plotly_chart(fig)
-
         # Summary statistics
         st.subheader("Summary")
         total_money = buckets_df['amount'].sum()
@@ -79,11 +69,5 @@ def show_buckets_page():
         type_percentages = (type_distribution['amount'] / total_money * 100).round(2)
         for type_name, pct in zip(type_distribution['type'], type_percentages):
             st.write(f"{type_name}: {pct}%")
-
-        # Show percentages by bucket
-        st.write("Percentage Distribution by Bucket:")
-        bucket_percentages = (buckets_df['amount'] / total_money * 100).round(2)
-        for name, pct in zip(buckets_df['name'], bucket_percentages):
-            st.write(f"{name}: {pct}%")
     else:
         st.info("No buckets created yet. Add your first bucket above!")
