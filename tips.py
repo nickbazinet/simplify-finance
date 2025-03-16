@@ -39,79 +39,68 @@ def show_tip_widget(context: str = "general"):
     """Display a floating tip widget"""
     tip = get_contextual_tip(context)
 
+    # Initialize session state for tip visibility
+    if 'tip_visible' not in st.session_state:
+        st.session_state.tip_visible = False
+
     # Add custom CSS for the floating tip
     st.markdown("""
         <style>
-        .floating-tip-container {
+        .stButton {
             position: fixed;
             bottom: 20px;
             right: 20px;
             z-index: 1000;
         }
-        .tip-icon {
+        .stButton > button {
             width: 40px;
             height: 40px;
-            background: #f0f2f6;
-            border-radius: 50%;
-            display: flex;
+            border-radius: 50% !important;
+            padding: 0 !important;
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            font-size: 24px;
-            border: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: #f0f2f6 !important;
+            border: none !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
             transition: all 0.2s ease;
         }
-        .tip-icon:hover {
+        .stButton > button:hover {
             transform: scale(1.05);
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
         }
-        .tip-content {
-            display: none;
-            position: absolute;
-            bottom: 50px;
-            right: 0;
+        .tip-bubble {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
             width: 250px;
             padding: 15px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            font-size: 0.95em;
-            color: #424242;
+            z-index: 999;
             animation: fadeIn 0.3s ease-out;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .tip-content.show {
-            display: block;
-        }
         </style>
     """, unsafe_allow_html=True)
 
-    # Create a unique key for this tip widget
-    widget_key = f"tip_{context}_{random.randint(1000, 9999)}"
+    # Create container for the tip button
+    with st.container():
+        # Toggle tip visibility on button click
+        if st.button("💡"):
+            st.session_state.tip_visible = not st.session_state.tip_visible
 
-    # Initialize session state for this tip widget
-    if widget_key not in st.session_state:
-        st.session_state[widget_key] = False
-
-    # JavaScript for handling click events
-    st.markdown(f"""
-        <div class="floating-tip-container">
-            <button class="tip-icon" onclick="toggleTip('{widget_key}')">💡</button>
-            <div id="{widget_key}" class="tip-content">
-                {tip['text']}
-            </div>
-        </div>
-        <script>
-            function toggleTip(id) {{
-                const content = document.getElementById(id);
-                content.classList.toggle('show');
-            }}
-        </script>
-    """, unsafe_allow_html=True)
+        # Show tip if visible
+        if st.session_state.tip_visible:
+            st.markdown(f"""
+                <div class="tip-bubble">
+                    {tip['text']}
+                </div>
+            """, unsafe_allow_html=True)
 
 def get_context_from_page(page_name: str) -> str:
     """Determine the tip context based on the current page"""
