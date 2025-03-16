@@ -61,6 +61,20 @@ def init_db():
          FOREIGN KEY (user_id) REFERENCES users (id))
     ''')
 
+    # Create goals table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS goals
+        (id INTEGER PRIMARY KEY AUTOINCREMENT,
+         user_id INTEGER NOT NULL,
+         name TEXT NOT NULL,
+         target_amount REAL NOT NULL,
+         current_amount REAL NOT NULL,
+         deadline DATE NOT NULL,
+         category TEXT NOT NULL,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         FOREIGN KEY (user_id) REFERENCES users (id))
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -160,6 +174,31 @@ def delete_budget(user_id, category):
     c = conn.cursor()
     c.execute('DELETE FROM budget WHERE user_id = ? AND category = ?', 
               (user_id, category))
+    conn.commit()
+    conn.close()
+
+# Goal operations
+def add_goal(user_id, name, target_amount, current_amount, deadline, category):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO goals (user_id, name, target_amount, current_amount, deadline, category)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (user_id, name, target_amount, current_amount, deadline, category))
+    conn.commit()
+    conn.close()
+
+def get_goals(user_id):
+    conn = get_db_connection()
+    df = pd.read_sql_query('SELECT * FROM goals WHERE user_id = ?', conn, params=(user_id,))
+    conn.close()
+    return df
+
+def update_goal_progress(goal_id, current_amount, user_id):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('UPDATE goals SET current_amount = ? WHERE id = ? AND user_id = ?',
+              (current_amount, goal_id, user_id))
     conn.commit()
     conn.close()
 
