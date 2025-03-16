@@ -154,5 +154,15 @@ def get_budget(user_id, month):
     conn.close()
     return df
 
+def delete_budget(user_id, category, month):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('''
+        DELETE FROM budget 
+        WHERE user_id = ? AND category = ? AND strftime("%Y-%m", month) = ?
+    ''', (user_id, category, month))
+    conn.commit()
+    conn.close()
+
 # Initialize database
 init_db()

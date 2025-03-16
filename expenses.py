@@ -47,6 +47,7 @@ def show_expenses_page():
 
     # Set Budget Tab
     with tab2:
+        # Add new budget form
         with st.form("set_budget"):
             st.subheader("Set Monthly Budget")
             budget_category = st.selectbox(
@@ -61,6 +62,35 @@ def show_expenses_page():
                 db.set_budget(user_id, budget_category, budget_amount, selected_month)
                 st.success("Budget set!")
                 st.rerun()
+
+        # Display existing budgets
+        st.subheader("Current Budget Settings")
+        budget_df = db.get_budget(user_id, selected_month)
+
+        if not budget_df.empty:
+            # Create columns for the header
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                st.write("**Category**")
+            with col2:
+                st.write("**Amount**")
+            with col3:
+                st.write("**Action**")
+
+            # Display each budget entry with a delete button
+            for _, row in budget_df.iterrows():
+                col1, col2, col3 = st.columns([2, 1, 1])
+                with col1:
+                    st.write(row['category'])
+                with col2:
+                    st.write(f"${row['amount']:,.2f}")
+                with col3:
+                    if st.button("Delete", key=f"delete_{row['category']}"):
+                        db.delete_budget(user_id, row['category'], selected_month)
+                        st.success(f"Deleted budget for {row['category']}")
+                        st.rerun()
+        else:
+            st.info("No budgets set for this month yet.")
 
     # Analysis Tab
     with tab3:
