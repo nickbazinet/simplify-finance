@@ -3,6 +3,7 @@ import buckets
 import expenses
 import auth
 import financial_health
+import tips
 
 st.set_page_config(
     page_title="Personal Finance Manager",
@@ -27,6 +28,9 @@ def main():
             "Navigate to",
             ["Money Buckets", "Monthly Expenses", "Financial Health Score"]
         )
+
+        # Show contextual tip at the top of the sidebar
+        tips.show_tip_widget(tips.get_context_from_page(page))
 
         if page == "Money Buckets":
             buckets.show_buckets_page()
