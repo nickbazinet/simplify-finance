@@ -68,11 +68,20 @@ def init_db():
          user_id INTEGER NOT NULL,
          name TEXT NOT NULL,
          target_amount REAL NOT NULL,
-         current_amount REAL NOT NULL,
          deadline DATE NOT NULL,
          category TEXT NOT NULL,
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
          FOREIGN KEY (user_id) REFERENCES users (id))
+    ''')
+
+    # Create goal_buckets table for mapping goals to buckets
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS goal_buckets
+        (id INTEGER PRIMARY KEY AUTOINCREMENT,
+         goal_id INTEGER NOT NULL,
+         bucket_id INTEGER NOT NULL,
+         FOREIGN KEY (goal_id) REFERENCES goals (id),
+         FOREIGN KEY (bucket_id) REFERENCES buckets (id))
     ''')
 
     conn.commit()
@@ -178,13 +187,13 @@ def delete_budget(user_id, category):
     conn.close()
 
 # Goal operations
-def add_goal(user_id, name, target_amount, current_amount, deadline, category):
+def add_goal(user_id, name, target_amount, deadline, category):
     conn = get_db_connection()
     c = conn.cursor()
     c.execute('''
-        INSERT INTO goals (user_id, name, target_amount, current_amount, deadline, category)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (user_id, name, target_amount, current_amount, deadline, category))
+        INSERT INTO goals (user_id, name, target_amount, deadline, category)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (user_id, name, target_amount, deadline, category))
     conn.commit()
     conn.close()
 
@@ -194,13 +203,35 @@ def get_goals(user_id):
     conn.close()
     return df
 
-def update_goal_progress(goal_id, current_amount, user_id):
+
+def link_goal_to_buckets(goal_id, bucket_ids):
+    """Link a goal to selected buckets"""
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute('UPDATE goals SET current_amount = ? WHERE id = ? AND user_id = ?',
-              (current_amount, goal_id, user_id))
+    # Clear existing links
+    c.execute('DELETE FROM goal_buckets WHERE goal_id = ?', (goal_id,))
+    # Add new links
+    for bucket_id in bucket_ids:
+        c.execute('INSERT INTO goal_buckets (goal_id, bucket_id) VALUES (?, ?)',
+                 (goal_id, bucket_id))
     conn.commit()
     conn.close()
+
+def get_goal_buckets(goal_id):
+    """Get buckets linked to a goal"""
+    conn = get_db_connection()
+    df = pd.read_sql_query('''
+        SELECT b.* FROM buckets b
+        JOIN goal_buckets gb ON b.id = gb.bucket_id
+        WHERE gb.goal_id = ?
+    ''', conn, params=(goal_id,))
+    conn.close()
+    return df
+
+def calculate_goal_current_amount(goal_id):
+    """Calculate current amount from linked buckets"""
+    buckets_df = get_goal_buckets(goal_id)
+    return buckets_df['amount'].sum() if not buckets_df.empty else 0.0
 
 # Initialize database
 init_db()
