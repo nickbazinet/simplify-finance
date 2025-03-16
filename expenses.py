@@ -24,6 +24,12 @@ def show_expenses_page():
         format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%B %Y")
     )
 
+    # Initialize session state for success messages
+    if 'budget_success' not in st.session_state:
+        st.session_state.budget_success = None
+    if 'expense_success' not in st.session_state:
+        st.session_state.expense_success = None
+
     # Tabs for different sections
     tab1, tab2, tab3 = st.tabs(["Add Expense", "Set Budget", "Analysis"])
 
@@ -42,55 +48,61 @@ def show_expenses_page():
 
             if submitted:
                 db.add_expense(user_id, category, amount, expense_date, description)
-                st.success("Expense added!")
+                st.session_state.expense_success = "Expense added successfully!"
                 st.rerun()
+
+        # Display expense success message
+        if st.session_state.expense_success:
+            st.success(st.session_state.expense_success)
+            st.session_state.expense_success = None
 
     # Set Budget Tab
     with tab2:
-        # Add new budget form
-        with st.form("set_budget"):
-            st.subheader("Set Monthly Budget")
-            budget_category = st.selectbox(
-                "Category",
-                ["Housing", "Transportation", "Food", "Utilities", "Entertainment", "Other"],
-                key="budget_category"
-            )
-            budget_amount = st.number_input("Budget Amount", min_value=0.0, format="%.2f", key="budget_amount")
-            budget_submitted = st.form_submit_button("Set Budget")
+        col1, col2 = st.columns([1, 1])
 
-            if budget_submitted:
-                db.set_budget(user_id, budget_category, budget_amount, selected_month)
-                st.success("Budget set!")
-                st.rerun()
+        # Add new budget form
+        with col1:
+            with st.form("set_budget"):
+                st.subheader("Set Monthly Budget")
+                budget_category = st.selectbox(
+                    "Category",
+                    ["Housing", "Transportation", "Food", "Utilities", "Entertainment", "Other"],
+                    key="budget_category"
+                )
+                budget_amount = st.number_input("Budget Amount", min_value=0.0, format="%.2f", key="budget_amount")
+                budget_submitted = st.form_submit_button("Set Budget")
+
+                if budget_submitted:
+                    db.set_budget(user_id, budget_category, budget_amount, selected_month)
+                    st.session_state.budget_success = f"Budget set for {budget_category}!"
+                    st.rerun()
+
+            # Display budget success message
+            if st.session_state.budget_success:
+                st.success(st.session_state.budget_success)
+                st.session_state.budget_success = None
 
         # Display existing budgets
-        st.subheader("Current Budget Settings")
-        budget_df = db.get_budget(user_id, selected_month)
+        with col2:
+            st.subheader("Current Budget Settings")
+            budget_df = db.get_budget(user_id, selected_month)
 
-        if not budget_df.empty:
-            # Create columns for the header
-            col1, col2, col3 = st.columns([2, 1, 1])
-            with col1:
-                st.write("**Category**")
-            with col2:
-                st.write("**Amount**")
-            with col3:
-                st.write("**Action**")
-
-            # Display each budget entry with a delete button
-            for _, row in budget_df.iterrows():
-                col1, col2, col3 = st.columns([2, 1, 1])
-                with col1:
-                    st.write(row['category'])
-                with col2:
-                    st.write(f"${row['amount']:,.2f}")
-                with col3:
-                    if st.button("Delete", key=f"delete_{row['category']}"):
-                        db.delete_budget(user_id, row['category'], selected_month)
-                        st.success(f"Deleted budget for {row['category']}")
-                        st.rerun()
-        else:
-            st.info("No budgets set for this month yet.")
+            if not budget_df.empty:
+                for _, row in budget_df.iterrows():
+                    with st.container():
+                        cols = st.columns([2, 2, 1])
+                        with cols[0]:
+                            st.write(row['category'])
+                        with cols[1]:
+                            st.write(f"${row['amount']:,.2f}")
+                        with cols[2]:
+                            if st.button("🗑️", key=f"delete_{row['category']}"):
+                                db.delete_budget(user_id, row['category'], selected_month)
+                                st.success(f"Deleted budget for {row['category']}")
+                                st.rerun()
+                        st.divider()
+            else:
+                st.info("No budgets set for this month yet.")
 
     # Analysis Tab
     with tab3:
