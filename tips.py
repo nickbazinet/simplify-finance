@@ -55,10 +55,13 @@ def show_tip_widget(context: str = "general"):
             transition: all 0.2s ease;
             width: 100%;
             margin-top: 20px;
+            color: #262730 !important;
+            font-weight: 500 !important;
         }
         .stButton > button:hover {
             background-color: #e0e2e6 !important;
             box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
+            color: #0f1116 !important;
         }
         </style>
     """, unsafe_allow_html=True)

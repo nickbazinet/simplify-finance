@@ -57,6 +57,29 @@ def show_login_page():
                         st.error("Username or email already exists")
 
 def show_logout_button():
+    # Add custom CSS for the logout button
+    st.markdown("""
+        <style>
+        .stButton > button {
+            border-radius: 20px !important;
+            padding: 8px 16px !important;
+            background-color: #f0f2f6 !important;
+            border: none !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 20px;
+            color: #262730 !important;
+            font-weight: 500 !important;
+        }
+        .stButton > button:hover {
+            background-color: #e0e2e6 !important;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
+            color: #0f1116 !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     if st.sidebar.button("Logout"):
         st.session_state.user = None
         st.rerun()
