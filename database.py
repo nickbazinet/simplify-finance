@@ -49,14 +49,15 @@ def init_db():
          FOREIGN KEY (user_id) REFERENCES users (id))
     ''')
 
-    # Create budget table with user_id
+    # Drop and recreate budget table without month field
+    c.execute('DROP TABLE IF EXISTS budget')
     c.execute('''
         CREATE TABLE IF NOT EXISTS budget
         (id INTEGER PRIMARY KEY AUTOINCREMENT,
          user_id INTEGER NOT NULL,
          category TEXT NOT NULL,
          amount REAL NOT NULL,
-         month DATE NOT NULL,
+         UNIQUE(user_id, category),
          FOREIGN KEY (user_id) REFERENCES users (id))
     ''')
 
@@ -134,33 +135,31 @@ def get_expenses(user_id, month=None):
     return df
 
 # Budget operations
-def set_budget(user_id, category, amount, month):
+def set_budget(user_id, category, amount):
     conn = get_db_connection()
     c = conn.cursor()
     c.execute('''
-        INSERT OR REPLACE INTO budget (user_id, category, amount, month)
-        VALUES (?, ?, ?, ?)
-    ''', (user_id, category, amount, month))
+        INSERT OR REPLACE INTO budget (user_id, category, amount)
+        VALUES (?, ?, ?)
+    ''', (user_id, category, amount))
     conn.commit()
     conn.close()
 
-def get_budget(user_id, month):
+def get_budget(user_id):
     conn = get_db_connection()
     df = pd.read_sql_query(
-        'SELECT * FROM budget WHERE user_id = ? AND strftime("%Y-%m", month) = ?',
+        'SELECT * FROM budget WHERE user_id = ?',
         conn,
-        params=(user_id, month)
+        params=(user_id,)
     )
     conn.close()
     return df
 
-def delete_budget(user_id, category, month):
+def delete_budget(user_id, category):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute('''
-        DELETE FROM budget 
-        WHERE user_id = ? AND category = ? AND strftime("%Y-%m", month) = ?
-    ''', (user_id, category, month))
+    c.execute('DELETE FROM budget WHERE user_id = ? AND category = ?', 
+              (user_id, category))
     conn.commit()
     conn.close()
 

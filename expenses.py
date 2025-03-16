@@ -73,7 +73,7 @@ def show_expenses_page():
                 budget_submitted = st.form_submit_button("Set Budget")
 
                 if budget_submitted:
-                    db.set_budget(user_id, budget_category, budget_amount, selected_month)
+                    db.set_budget(user_id, budget_category, budget_amount)
                     st.session_state.budget_success = f"Budget set for {budget_category}!"
                     st.rerun()
 
@@ -85,7 +85,7 @@ def show_expenses_page():
         # Display existing budgets
         with col2:
             st.subheader("Current Budget Settings")
-            budget_df = db.get_budget(user_id, selected_month)
+            budget_df = db.get_budget(user_id)
 
             if not budget_df.empty:
                 for _, row in budget_df.iterrows():
@@ -97,17 +97,17 @@ def show_expenses_page():
                             st.write(f"${row['amount']:,.2f}")
                         with cols[2]:
                             if st.button("🗑️", key=f"delete_{row['category']}"):
-                                db.delete_budget(user_id, row['category'], selected_month)
+                                db.delete_budget(user_id, row['category'])
                                 st.success(f"Deleted budget for {row['category']}")
                                 st.rerun()
                         st.divider()
             else:
-                st.info("No budgets set for this month yet.")
+                st.info("No budgets set yet.")
 
     # Analysis Tab
     with tab3:
         expenses_df = db.get_expenses(user_id, selected_month)
-        budget_df = db.get_budget(user_id, selected_month)
+        budget_df = db.get_budget(user_id)
 
         if not expenses_df.empty or not budget_df.empty:
             st.subheader("Monthly Budget vs Actual Expenses")
@@ -178,4 +178,4 @@ def show_expenses_page():
                     use_container_width=True
                 )
         else:
-            st.info("No expenses or budget set for this month yet.")
+            st.info("No expenses or budget set yet.")
