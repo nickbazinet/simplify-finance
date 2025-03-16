@@ -190,14 +190,17 @@ def delete_budget(user_id, category):
 
 # Goal operations
 def add_goal(user_id, name, target_amount, deadline, category):
+    """Add a new goal and return its ID"""
     conn = get_db_connection()
     c = conn.cursor()
     c.execute('''
         INSERT INTO goals (user_id, name, target_amount, deadline, category)
         VALUES (?, ?, ?, ?, ?)
     ''', (user_id, name, target_amount, deadline, category))
+    goal_id = c.lastrowid  # Get the ID of the newly inserted goal
     conn.commit()
     conn.close()
+    return goal_id
 
 def get_goals(user_id):
     conn = get_db_connection()

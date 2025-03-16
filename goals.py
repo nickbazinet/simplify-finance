@@ -46,13 +46,11 @@ def show_goals_page():
 
         submitted = st.form_submit_button("Add Goal")
         if submitted and goal_name and target_amount > 0:
-            # Add goal
-            db.add_goal(user_id, goal_name, target_amount, deadline, category)
-            # Get the newly created goal's ID
-            goals_df = db.get_goals(user_id)
-            new_goal_id = goals_df[goals_df['name'] == goal_name]['id'].iloc[-1]
-            # Link selected buckets
-            db.link_goal_to_buckets(new_goal_id, selected_buckets)
+            # Add goal and get its ID
+            new_goal_id = db.add_goal(user_id, goal_name, target_amount, deadline, category)
+            # Link selected buckets immediately
+            if selected_buckets:
+                db.link_goal_to_buckets(new_goal_id, selected_buckets)
             st.success("Goal added successfully!")
             st.rerun()
 
