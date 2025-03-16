@@ -36,41 +36,81 @@ def get_contextual_tip(context: str = "general") -> Dict[str, str]:
     }
 
 def show_tip_widget(context: str = "general"):
-    """Display a subtle tip widget"""
+    """Display a floating tip widget"""
     tip = get_contextual_tip(context)
 
-    # CSS for subtle animations
+    # Add custom CSS for the floating tip
     st.markdown("""
         <style>
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .floating-tip-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
         }
-        .tip-container {
-            border: 1px solid #e6e6e6;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 10px 0;
-            background: #fafafa;
-            animation: fadeIn 0.8s ease-out;
+        .tip-icon {
+            width: 40px;
+            height: 40px;
+            background: #f0f2f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
         }
-        .tip-container:hover {
-            background: #f6f6f6;
-            border-color: #d1d1d1;
+        .tip-icon:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         }
-        .tip-text {
+        .tip-content {
+            display: none;
+            position: absolute;
+            bottom: 50px;
+            right: 0;
+            width: 250px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             font-size: 0.95em;
             color: #424242;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tip-content.show {
+            display: block;
         }
         </style>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # Display the tip with subtle styling
+    # Create a unique key for this tip widget
+    widget_key = f"tip_{context}_{random.randint(1000, 9999)}"
+
+    # Initialize session state for this tip widget
+    if widget_key not in st.session_state:
+        st.session_state[widget_key] = False
+
+    # JavaScript for handling click events
     st.markdown(f"""
-        <div class="tip-container">
-            <div class="tip-text">{tip['text']}</div>
+        <div class="floating-tip-container">
+            <button class="tip-icon" onclick="toggleTip('{widget_key}')">💡</button>
+            <div id="{widget_key}" class="tip-content">
+                {tip['text']}
+            </div>
         </div>
+        <script>
+            function toggleTip(id) {{
+                const content = document.getElementById(id);
+                content.classList.toggle('show');
+            }}
+        </script>
     """, unsafe_allow_html=True)
 
 def get_context_from_page(page_name: str) -> str:
