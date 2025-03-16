@@ -46,31 +46,31 @@ def show_tip_widget(context: str = "general"):
     # Add custom CSS for the floating tip
     st.markdown("""
         <style>
-        .stButton {
-            position: fixed;
+        div[data-testid="stSidebarUserContent"] {
+            position: relative;
+        }
+        .tip-button {
+            position: absolute;
             bottom: 20px;
             right: 20px;
-            z-index: 1000;
-        }
-        .stButton > button {
             width: 40px;
             height: 40px;
-            border-radius: 50% !important;
-            padding: 0 !important;
-            display: flex !important;
+            border-radius: 50%;
+            background: #f0f2f6;
+            display: flex;
             align-items: center;
             justify-content: center;
-            background: #f0f2f6 !important;
-            border: none !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: none;
             transition: all 0.2s ease;
         }
-        .stButton > button:hover {
+        .tip-button:hover {
             transform: scale(1.05);
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         }
         .tip-bubble {
-            position: fixed;
+            position: absolute;
             bottom: 70px;
             right: 20px;
             width: 250px;
@@ -78,7 +78,6 @@ def show_tip_widget(context: str = "general"):
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 999;
             animation: fadeIn 0.3s ease-out;
         }
         @keyframes fadeIn {
@@ -89,18 +88,14 @@ def show_tip_widget(context: str = "general"):
     """, unsafe_allow_html=True)
 
     # Create container for the tip button
-    with st.container():
-        # Toggle tip visibility on button click
-        if st.button("💡"):
+    with st.sidebar:
+        st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)  # Spacer
+        if st.button("💡", key="tip_button"):
             st.session_state.tip_visible = not st.session_state.tip_visible
 
         # Show tip if visible
         if st.session_state.tip_visible:
-            st.markdown(f"""
-                <div class="tip-bubble">
-                    {tip['text']}
-                </div>
-            """, unsafe_allow_html=True)
+            st.info(tip['text'])
 
 def get_context_from_page(page_name: str) -> str:
     """Determine the tip context based on the current page"""
