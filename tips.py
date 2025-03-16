@@ -36,49 +36,37 @@ def get_contextual_tip(context: str = "general") -> Dict[str, str]:
     }
 
 def show_tip_widget(context: str = "general"):
-    """Display an animated tip widget"""
+    """Display a subtle tip widget"""
     tip = get_contextual_tip(context)
-    
-    # CSS for animations
+
+    # CSS for subtle animations
     st.markdown("""
         <style>
-        @keyframes slideIn {
-            from {
-                transform: translateX(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .tip-container {
-            border: 2px solid #f0f2f6;
-            border-radius: 10px;
-            padding: 20px;
+            border: 1px solid #e6e6e6;
+            border-radius: 5px;
+            padding: 15px;
             margin: 10px 0;
-            background: linear-gradient(135deg, #f6f8fe 0%, #ffffff 100%);
-            animation: slideIn 0.5s ease-out;
-            transition: all 0.3s ease;
+            background: #fafafa;
+            animation: fadeIn 0.8s ease-out;
+            transition: all 0.2s ease;
         }
         .tip-container:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+            background: #f6f6f6;
+            border-color: #d1d1d1;
         }
         .tip-text {
-            font-size: 1.1em;
-            color: #1f1f1f;
-            animation: pulse 2s infinite ease-in-out;
+            font-size: 0.95em;
+            color: #424242;
         }
         </style>
         """, unsafe_allow_html=True)
 
-    # Display the tip with animations
+    # Display the tip with subtle styling
     st.markdown(f"""
         <div class="tip-container">
             <div class="tip-text">{tip['text']}</div>

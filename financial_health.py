@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from utils import calculate_percentage
 import database as db
-import tips
 
 def calculate_savings_score(buckets_df):
     """Calculate score based on savings and investment allocation"""
@@ -139,15 +138,6 @@ def show_health_score_page():
         st.metric("Diversification Score", f"{scores['diversification_score']}/100")
     with col3:
         st.metric("Budget Score", f"{scores['budget_score']}/100")
-
-    # Show contextual tip based on lowest score
-    lowest_score = min(
-        ("savings", scores['savings_score']),
-        ("investing", scores['diversification_score']),
-        ("budgeting", scores['budget_score']),
-        key=lambda x: x[1]
-    )
-    tips.show_tip_widget(lowest_score[0])
 
     # Show recommendations
     st.subheader("Recommendations")
