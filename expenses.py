@@ -39,7 +39,8 @@ def show_expenses_page():
             st.subheader("Add New Expense")
             category = st.selectbox(
                 "Category",
-                ["Housing", "Transportation", "Food", "Utilities", "Entertainment", "Other"]
+                ["Housing", "Utilities", "Transportation", "Food", "Restaurants",  "Insurance", "Entertainment",
+                 "Shopping & Personal Care", "Household Supplies", "Vacations", "Hobby", "Miscellaneous"]
             )
             amount = st.number_input("Amount", min_value=0.0, format="%.2f")
             expense_date = st.date_input("Date", value=datetime.today())
@@ -66,7 +67,8 @@ def show_expenses_page():
                 st.subheader("Set Monthly Budget")
                 budget_category = st.selectbox(
                     "Category",
-                    ["Housing", "Transportation", "Food", "Utilities", "Entertainment", "Other"],
+                    ["Housing", "Utilities", "Transportation", "Food", "Restaurants", "Insurance", "Entertainment",
+                     "Shopping & Personal Care", "Household Supplies", "Vacations", "Hobby", "Miscellaneous"],
                     key="budget_category"
                 )
                 budget_amount = st.number_input("Budget Amount", min_value=0.0, format="%.2f", key="budget_amount")
