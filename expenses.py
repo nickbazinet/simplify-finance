@@ -5,6 +5,22 @@ import database as db
 from datetime import datetime
 import pandas as pd
 
+# Category descriptions for tooltips
+CATEGORY_DESCRIPTIONS = {
+    "Housing": "Rent, mortgage, property taxes, home insurance, repairs, and maintenance",
+    "Utilities": "Electricity, water, gas, internet, phone bills, and other household utilities",
+    "Transportation": "Car payments, fuel, public transit, maintenance, parking, and ride-sharing",
+    "Food": "Groceries, household supplies, and other essential food items",
+    "Restaurants": "Dining out, takeout, coffee shops, and food delivery services",
+    "Insurance": "Health, life, disability, and other insurance premiums",
+    "Entertainment": "Movies, streaming services, concerts, hobbies, and recreational activities",
+    "Shopping & Personal Care": "Clothing, accessories, grooming, and personal care products",
+    "Household Supplies": "Cleaning supplies, home decor, tools, and other household items",
+    "Vacations": "Travel expenses, accommodations, activities, and vacation-related costs",
+    "Hobby": "Expenses related to personal hobbies, sports, and leisure activities",
+    "Miscellaneous": "Other expenses that don't fit into the above categories"
+}
+
 def show_expenses_page():
     st.header("Monthly Expenses")
     user_id = st.session_state.user['id']
@@ -39,8 +55,8 @@ def show_expenses_page():
             st.subheader("Add New Expense")
             category = st.selectbox(
                 "Category",
-                ["Housing", "Utilities", "Transportation", "Food", "Restaurants",  "Insurance", "Entertainment",
-                 "Shopping & Personal Care", "Household Supplies", "Vacations", "Hobby", "Miscellaneous"]
+                list(CATEGORY_DESCRIPTIONS.keys()),
+                help="\n".join(f"{cat}: {desc}" for cat, desc in CATEGORY_DESCRIPTIONS.items())
             )
             amount = st.number_input("Amount", min_value=0.0, format="%.2f")
             description = st.text_input("Description")
@@ -70,9 +86,9 @@ def show_expenses_page():
                 st.subheader("Set Monthly Budget")
                 budget_category = st.selectbox(
                     "Category",
-                    ["Housing", "Utilities", "Transportation", "Food", "Restaurants", "Insurance", "Entertainment",
-                     "Shopping & Personal Care", "Household Supplies", "Vacations", "Hobby", "Miscellaneous"],
-                    key="budget_category"
+                    list(CATEGORY_DESCRIPTIONS.keys()),
+                    key="budget_category",
+                    help="\n".join(f"{cat}: {desc}" for cat, desc in CATEGORY_DESCRIPTIONS.items())
                 )
                 budget_amount = st.number_input("Budget Amount", min_value=0.0, format="%.2f", key="budget_amount")
                 budget_submitted = st.form_submit_button("Set Budget")
