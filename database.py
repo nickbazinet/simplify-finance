@@ -156,6 +156,16 @@ def get_expenses(user_id, month=None):
     conn.close()
     return df
 
+def delete_expense(expense_id, user_id):
+    """Delete an expense for a user"""
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM expenses WHERE id = ? AND user_id = ?', 
+              (expense_id, user_id))
+    conn.commit()
+    conn.close()
+
+
 # Budget operations
 def set_budget(user_id, category, amount):
     conn = get_db_connection()

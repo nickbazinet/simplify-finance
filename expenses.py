@@ -148,7 +148,7 @@ def show_expenses_page():
                 st.metric("Total Spent", f"${total_spent:,.2f}")
             with col3:
                 st.metric(
-                    "Remaining Budget", 
+                    "Remaining Budget",
                     f"${remaining:,.2f}",
                     delta=f"${remaining:,.2f}"
                 )
@@ -171,16 +171,37 @@ def show_expenses_page():
             # Show detailed expenses
             st.subheader("Recent Expenses")
             if not expenses_df.empty:
-                detailed_df = pd.DataFrame({
-                    'Date': pd.to_datetime(expenses_df['date']).dt.strftime('%Y-%m-%d'),
-                    'Category': expenses_df['category'],
-                    'Description': expenses_df['description'],
-                    'Amount': expenses_df['amount'].map('${:,.2f}'.format)
-                })
-                st.dataframe(
-                    detailed_df.sort_values('Date', ascending=False),
-                    hide_index=True,
-                    use_container_width=True
-                )
+                # Create columns for the table
+                col1, col2, col3, col4, col5 = st.columns([2, 2, 3, 1.5, 0.5])
+
+                # Headers
+                with col1:
+                    st.write("**Date**")
+                with col2:
+                    st.write("**Category**")
+                with col3:
+                    st.write("**Description**")
+                with col4:
+                    st.write("**Amount**")
+                with col5:
+                    st.write("**Action**")
+
+                # Display each expense with delete button
+                for idx, row in expenses_df.sort_values('date', ascending=False).iterrows():
+                    with col1:
+                        st.write(pd.to_datetime(row['date']).strftime('%Y-%m-%d'))
+                    with col2:
+                        st.write(row['category'])
+                    with col3:
+                        st.write(row['description'] if row['description'] else "-")
+                    with col4:
+                        st.write(f"${row['amount']:,.2f}")
+                    with col5:
+                        if st.button("🗑️", key=f"delete_expense_{row['id']}"):
+                            db.delete_expense(row['id'], user_id)
+                            st.success("Expense deleted!")
+                            st.rerun()
+            else:
+                st.info("No expenses recorded for this month.")
         else:
             st.info("No expenses or budget set yet.")
