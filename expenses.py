@@ -181,26 +181,11 @@ def show_expenses_page():
                     delta=f"${remaining:,.2f}"
                 )
 
-            # Detailed breakdown table
-            st.subheader("Detailed Breakdown")
-            breakdown_df = pd.DataFrame({
-                'Category': categories,
-                'Budget': budget_by_category.map('${:,.2f}'.format),
-                'Actual': expense_by_category.map('${:,.2f}'.format),
-                'Remaining': (budget_by_category - expense_by_category).map('${:,.2f}'.format),
-                'Budget Used %': (expense_by_category / budget_by_category * 100).fillna(0).map('{:.1f}%'.format)
-            })
-            st.dataframe(
-                breakdown_df,
-                hide_index=True,
-                use_container_width=True
-            )
-
             # Show detailed expenses
             expense_container = st.container()
             if st.session_state.delete_success:
                 with expense_container:
-                    st.success("Expense deleted", icon="✓")
+                    st.success("Expense deleted")
                     st.session_state.delete_success = None
 
             st.subheader("Recent Expenses")
