@@ -21,11 +21,6 @@ CATEGORY_DESCRIPTIONS = {
     "Miscellaneous": "Other expenses that don't fit into the above categories"
 }
 
-def format_category_option(category):
-    """Format category option with tooltip"""
-    tooltip = CATEGORY_DESCRIPTIONS[category]
-    return f"{category} ℹ️\n{tooltip}"
-
 def show_expenses_page():
     st.header("Monthly Expenses")
     user_id = st.session_state.user['id']
@@ -61,7 +56,7 @@ def show_expenses_page():
             category = st.selectbox(
                 "Category",
                 list(CATEGORY_DESCRIPTIONS.keys()),
-                format_func=format_category_option
+                help="\n".join(f"{cat}: {desc}" for cat, desc in CATEGORY_DESCRIPTIONS.items())
             )
             amount = st.number_input("Amount", min_value=0.0, format="%.2f")
             description = st.text_input("Description")
@@ -93,7 +88,7 @@ def show_expenses_page():
                     "Category",
                     list(CATEGORY_DESCRIPTIONS.keys()),
                     key="budget_category",
-                    format_func=format_category_option
+                    help="\n".join(f"{cat}: {desc}" for cat, desc in CATEGORY_DESCRIPTIONS.items())
                 )
                 budget_amount = st.number_input("Budget Amount", min_value=0.0, format="%.2f", key="budget_amount")
                 budget_submitted = st.form_submit_button("Set Budget")
