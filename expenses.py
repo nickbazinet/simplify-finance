@@ -29,6 +29,34 @@ def show_expenses_page():
         st.session_state.budget_success = None
     if 'expense_success' not in st.session_state:
         st.session_state.expense_success = None
+    if 'delete_success' not in st.session_state:
+        st.session_state.delete_success = None
+
+    # Add custom CSS for delete button
+    st.markdown("""
+        <style>
+        .delete-button {
+            color: #ff4b4b;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .delete-button:hover {
+            color: #ff0000;
+        }
+        .expense-row {
+            margin: 0;
+            padding: 4px 0;
+            font-size: 14px;
+        }
+        .expense-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
     # Tabs for different sections
     tab1, tab2, tab3 = st.tabs(["Add Expense", "Set Budget", "Analysis"])
@@ -52,12 +80,12 @@ def show_expenses_page():
                     day=datetime.today().day
                 ).date()
                 db.add_expense(user_id, category, amount, expense_date, description)
-                st.session_state.expense_success = "Expense added successfully!"
+                st.session_state.expense_success = True
                 st.rerun()
 
         # Display expense success message
         if st.session_state.expense_success:
-            st.success(st.session_state.expense_success)
+            st.success("Expense added successfully!")
             st.session_state.expense_success = None
 
     # Set Budget Tab
@@ -79,12 +107,12 @@ def show_expenses_page():
 
                 if budget_submitted:
                     db.set_budget(user_id, budget_category, budget_amount)
-                    st.session_state.budget_success = f"Budget set for {budget_category}!"
+                    st.session_state.budget_success = True
                     st.rerun()
 
             # Display budget success message
             if st.session_state.budget_success:
-                st.success(st.session_state.budget_success)
+                st.success(f"Budget set for {budget_category}!")
                 st.session_state.budget_success = None
 
         # Display existing budgets
@@ -169,38 +197,31 @@ def show_expenses_page():
             )
 
             # Show detailed expenses
+            expense_container = st.container()
+            if st.session_state.delete_success:
+                with expense_container:
+                    st.success("Expense deleted", icon="✓")
+                    st.session_state.delete_success = None
+
             st.subheader("Recent Expenses")
             if not expenses_df.empty:
-                # Create columns for the table
-                col1, col2, col3, col4, col5 = st.columns([2, 2, 3, 1.5, 0.5])
-
-                # Headers
-                with col1:
-                    st.write("**Date**")
-                with col2:
-                    st.write("**Category**")
-                with col3:
-                    st.write("**Description**")
-                with col4:
-                    st.write("**Amount**")
-                with col5:
-                    st.write("**Action**")
-
-                # Display each expense with delete button
+                # Create compact table for expenses
                 for idx, row in expenses_df.sort_values('date', ascending=False).iterrows():
-                    with col1:
-                        st.write(pd.to_datetime(row['date']).strftime('%Y-%m-%d'))
-                    with col2:
-                        st.write(row['category'])
-                    with col3:
-                        st.write(row['description'] if row['description'] else "-")
-                    with col4:
-                        st.write(f"${row['amount']:,.2f}")
-                    with col5:
-                        if st.button("🗑️", key=f"delete_expense_{row['id']}"):
-                            db.delete_expense(row['id'], user_id)
-                            st.success("Expense deleted!")
-                            st.rerun()
+                    with st.container():
+                        cols = st.columns([2, 2, 3, 2, 1])
+                        with cols[0]:
+                            st.markdown(f'<p class="expense-row">{pd.to_datetime(row["date"]).strftime("%Y-%m-%d")}</p>', unsafe_allow_html=True)
+                        with cols[1]:
+                            st.markdown(f'<p class="expense-row">{row["category"]}</p>', unsafe_allow_html=True)
+                        with cols[2]:
+                            st.markdown(f'<p class="expense-row">{row["description"] if row["description"] else "-"}</p>', unsafe_allow_html=True)
+                        with cols[3]:
+                            st.markdown(f'<p class="expense-row">${row["amount"]:,.2f}</p>', unsafe_allow_html=True)
+                        with cols[4]:
+                            if st.button("×", key=f"delete_expense_{row['id']}", help="Delete expense"):
+                                db.delete_expense(row['id'], user_id)
+                                st.session_state.delete_success = True
+                                st.rerun()
             else:
                 st.info("No expenses recorded for this month.")
         else:
