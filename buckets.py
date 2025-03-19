@@ -7,7 +7,10 @@ def show_buckets_page():
     st.header("Money Buckets")
     user_id = st.session_state.user['id']
 
-    # Add new bucket (now in an expander)
+    # Get buckets data first
+    buckets_df = db.get_buckets(user_id)
+
+    # Add new bucket (in an expander)
     with st.expander("➕ Add New Bucket", expanded=False):
         with st.form("add_bucket"):
             st.subheader("Add New Bucket")
@@ -24,10 +27,28 @@ def show_buckets_page():
                 st.success(f"Added {bucket_name} bucket!")
                 st.rerun()
 
-    # Display existing buckets
-    buckets_df = db.get_buckets(user_id)
-
     if not buckets_df.empty:
+        # Show distribution chart first
+        st.subheader("Money Distribution by Type")
+        type_distribution = buckets_df.groupby('type')['amount'].sum().reset_index()
+        fig = px.pie(
+            type_distribution,
+            values='amount',
+            names='type',
+            title='Distribution of Money by Account Type'
+        )
+        st.plotly_chart(fig)
+
+        # Summary statistics
+        total_money = buckets_df['amount'].sum()
+        st.metric("Total Money", f"${total_money:,.2f}")
+
+        # Show percentages by type
+        st.write("Percentage Distribution by Type:")
+        type_percentages = (type_distribution['amount'] / total_money * 100).round(2)
+        for type_name, pct in zip(type_distribution['type'], type_percentages):
+            st.write(f"{type_name}: {pct}%")
+
         # Show buckets table
         st.subheader("Your Buckets")
         for idx, row in buckets_df.iterrows():
@@ -48,27 +69,5 @@ def show_buckets_page():
                     st.rerun()
             with col4:
                 st.write(f"${row['amount']:,.2f}")
-
-        # Distribution pie chart by type
-        st.subheader("Money Distribution by Type")
-        type_distribution = buckets_df.groupby('type')['amount'].sum().reset_index()
-        fig = px.pie(
-            type_distribution,
-            values='amount',
-            names='type',
-            title='Distribution of Money by Account Type'
-        )
-        st.plotly_chart(fig)
-
-        # Summary statistics
-        st.subheader("Summary")
-        total_money = buckets_df['amount'].sum()
-        st.metric("Total Money", f"${total_money:,.2f}")
-
-        # Show percentages by type
-        st.write("Percentage Distribution by Type:")
-        type_percentages = (type_distribution['amount'] / total_money * 100).round(2)
-        for type_name, pct in zip(type_distribution['type'], type_percentages):
-            st.write(f"{type_name}: {pct}%")
     else:
         st.info("No buckets created yet. Click '➕ Add New Bucket' above to create your first bucket!")
