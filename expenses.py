@@ -43,11 +43,14 @@ def show_expenses_page():
                  "Shopping & Personal Care", "Household Supplies", "Vacations", "Hobby", "Miscellaneous"]
             )
             amount = st.number_input("Amount", min_value=0.0, format="%.2f")
-            expense_date = st.date_input("Date", value=datetime.today())
             description = st.text_input("Description")
             submitted = st.form_submit_button("Add Expense")
 
             if submitted:
+                # Use the selected month and current day
+                expense_date = datetime.strptime(selected_month + "-01", "%Y-%m-%d").replace(
+                    day=datetime.today().day
+                ).date()
                 db.add_expense(user_id, category, amount, expense_date, description)
                 st.session_state.expense_success = "Expense added successfully!"
                 st.rerun()
