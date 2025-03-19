@@ -7,21 +7,22 @@ def show_buckets_page():
     st.header("Money Buckets")
     user_id = st.session_state.user['id']
 
-    # Add new bucket
-    with st.form("add_bucket"):
-        st.subheader("Add New Bucket")
-        bucket_name = st.text_input("Bucket Name")
-        bucket_type = st.selectbox(
-            "Bucket Type",
-            ["RRSP", "TFSA", "Cash", "Crypto", "Non-Registered"]
-        )
-        amount = st.number_input("Amount", min_value=0.0, format="%.2f")
-        submitted = st.form_submit_button("Add Bucket")
+    # Add new bucket (now in an expander)
+    with st.expander("➕ Add New Bucket", expanded=False):
+        with st.form("add_bucket"):
+            st.subheader("Add New Bucket")
+            bucket_name = st.text_input("Bucket Name")
+            bucket_type = st.selectbox(
+                "Bucket Type",
+                ["RRSP", "TFSA", "Cash", "Crypto", "Non-Registered"]
+            )
+            amount = st.number_input("Amount", min_value=0.0, format="%.2f")
+            submitted = st.form_submit_button("Add Bucket")
 
-        if submitted and bucket_name:
-            db.add_bucket(user_id, bucket_name, amount, bucket_type)
-            st.success(f"Added {bucket_name} bucket!")
-            st.rerun()
+            if submitted and bucket_name:
+                db.add_bucket(user_id, bucket_name, amount, bucket_type)
+                st.success(f"Added {bucket_name} bucket!")
+                st.rerun()
 
     # Display existing buckets
     buckets_df = db.get_buckets(user_id)
@@ -70,4 +71,4 @@ def show_buckets_page():
         for type_name, pct in zip(type_distribution['type'], type_percentages):
             st.write(f"{type_name}: {pct}%")
     else:
-        st.info("No buckets created yet. Add your first bucket above!")
+        st.info("No buckets created yet. Click '➕ Add New Bucket' above to create your first bucket!")
