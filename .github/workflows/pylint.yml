@@ -1,6 +1,9 @@
-name: Pylint
+name: Build and Release
 
-on: [push]
+on:
+  push:
+    tags:
+      - "v*"  # This triggers the workflow when a tag like "v1.0.0" is pushed
 
 jobs:
   build:
@@ -9,17 +12,35 @@ jobs:
       matrix:
         python-version: ["3.11"]
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pylint pyinstaller
-        pyinstaller --noconfirm --onefile --windowed --add-data="finance.db:." app.py
-    - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pylint pyinstaller
+
+      - name: Package Application
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --add-data="finance.db:." app.py
+
+      - name: Create ZIP Archive
+        run: |
+          mkdir release
+          cp dist/app release/
+          cp finance.db release/  # Include the database in the ZIP
+          cd release
+          zip -r packaged_app.zip *
+          cd ..
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/packaged_app.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
