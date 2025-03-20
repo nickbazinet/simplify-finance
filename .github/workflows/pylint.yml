@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pylint pyinstaller
-        pyinstaller --noconfirm --onefile --windowed --add-data "finance.db;." app.py
+        pyinstaller --noconfirm --onefile --windowed --add-data="finance.db:." app.py
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
