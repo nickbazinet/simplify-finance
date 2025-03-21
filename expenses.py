@@ -88,6 +88,34 @@ def show_expenses_page():
             st.success("Expense added successfully!")
             st.session_state.expense_success = None
 
+        # Show Recent Expenses right after the add expense form
+        expenses_df = db.get_expenses(user_id, selected_month)
+        st.subheader("Recent Expenses")
+        if not expenses_df.empty:
+            # Create compact table for expenses
+            for idx, row in expenses_df.sort_values('date', ascending=False).iterrows():
+                with st.container():
+                    cols = st.columns([2, 2, 3, 2, 1])
+                    with cols[0]:
+                        st.markdown(f'<p class="expense-row">{pd.to_datetime(row["date"]).strftime("%Y-%m-%d")}</p>', unsafe_allow_html=True)
+                    with cols[1]:
+                        st.markdown(f'<p class="expense-row">{row["category"]}</p>', unsafe_allow_html=True)
+                    with cols[2]:
+                        st.markdown(f'<p class="expense-row">{row["description"] if row["description"] else "-"}</p>', unsafe_allow_html=True)
+                    with cols[3]:
+                        st.markdown(f'<p class="expense-row">${row["amount"]:,.2f}</p>', unsafe_allow_html=True)
+                    with cols[4]:
+                        if st.button("×", key=f"delete_expense_{row['id']}", help="Delete expense"):
+                            db.delete_expense(row['id'], user_id)
+                            st.session_state.delete_success = True
+                            st.rerun()
+
+            if st.session_state.delete_success:
+                st.success("Expense deleted")
+                st.session_state.delete_success = None
+        else:
+            st.info("No expenses recorded for this month.")
+
     # Set Budget Tab
     with tab2:
         col1, col2 = st.columns([1, 1])
@@ -180,34 +208,5 @@ def show_expenses_page():
                     f"${remaining:,.2f}",
                     delta=f"${remaining:,.2f}"
                 )
-
-            # Show detailed expenses
-            expense_container = st.container()
-            if st.session_state.delete_success:
-                with expense_container:
-                    st.success("Expense deleted")
-                    st.session_state.delete_success = None
-
-            st.subheader("Recent Expenses")
-            if not expenses_df.empty:
-                # Create compact table for expenses
-                for idx, row in expenses_df.sort_values('date', ascending=False).iterrows():
-                    with st.container():
-                        cols = st.columns([2, 2, 3, 2, 1])
-                        with cols[0]:
-                            st.markdown(f'<p class="expense-row">{pd.to_datetime(row["date"]).strftime("%Y-%m-%d")}</p>', unsafe_allow_html=True)
-                        with cols[1]:
-                            st.markdown(f'<p class="expense-row">{row["category"]}</p>', unsafe_allow_html=True)
-                        with cols[2]:
-                            st.markdown(f'<p class="expense-row">{row["description"] if row["description"] else "-"}</p>', unsafe_allow_html=True)
-                        with cols[3]:
-                            st.markdown(f'<p class="expense-row">${row["amount"]:,.2f}</p>', unsafe_allow_html=True)
-                        with cols[4]:
-                            if st.button("×", key=f"delete_expense_{row['id']}", help="Delete expense"):
-                                db.delete_expense(row['id'], user_id)
-                                st.session_state.delete_success = True
-                                st.rerun()
-            else:
-                st.info("No expenses recorded for this month.")
         else:
             st.info("No expenses or budget set yet.")
