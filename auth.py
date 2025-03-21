@@ -9,7 +9,16 @@ from datetime import datetime, timedelta
 AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
 AUTH0_CLIENT_SECRET = os.environ['AUTH0_CLIENT_SECRET']
 AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
-AUTH0_CALLBACK_URL = "http://localhost:5000/callback"  # Streamlit callback URL
+
+# Get Replit domain from environment variables
+REPL_SLUG = os.environ.get('REPL_SLUG', 'bucketbudget')  # Your Repl name
+REPL_OWNER = os.environ.get('REPL_OWNER')  # Your Replit username
+
+# Construct callback URL
+if os.environ.get('REPL_ID'):  # We're on Replit
+    AUTH0_CALLBACK_URL = f"https://{REPL_SLUG}.{REPL_OWNER}.repl.co/callback"
+else:  # Local development
+    AUTH0_CALLBACK_URL = "http://localhost:5000/callback"
 
 def init_session_state():
     """Initialize session state variables"""
@@ -96,9 +105,9 @@ def show_login_page():
     """, unsafe_allow_html=True)
 
     # Handle Auth0 callback
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
     if 'code' in query_params:
-        code = query_params['code'][0]
+        code = query_params['code']
         try:
             user, tokens = handle_auth0_callback(code)
             st.session_state.user = user
