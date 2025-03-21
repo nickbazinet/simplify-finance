@@ -29,7 +29,7 @@ def show_login_page():
                 st.error("Invalid username or password")
 
     # Registration toggle button
-    st.button("New User? Register Here", on_click=toggle_register)
+    #st.button("New User? Register Here", on_click=toggle_register)
 
     # Registration section
     if st.session_state.show_register:
