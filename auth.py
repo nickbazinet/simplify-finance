@@ -18,7 +18,7 @@ REPL_OWNER = os.environ.get('REPL_OWNER')  # Your Replit username
 if os.environ.get('REPL_ID'):  # We're on Replit
     AUTH0_CALLBACK_URL = f"https://{REPL_SLUG}.{REPL_OWNER}.repl.co/callback"
 else:  # Local development
-    AUTH0_CALLBACK_URL = "https://finance-simplify.streamlit.app/callback"
+    AUTH0_CALLBACK_URL = "https://finance-simplify.streamlit.app"
 
 def init_session_state():
     """Initialize session state variables"""
