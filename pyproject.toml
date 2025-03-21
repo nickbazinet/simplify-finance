@@ -8,4 +8,6 @@ dependencies = [
     "plotly>=6.0.0",
     "streamlit>=1.43.2",
     "twilio>=9.5.0",
+    "authlib",
+    "requests",
 ]
