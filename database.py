@@ -111,6 +111,41 @@ def verify_user(username, password):
     conn.close()
     return dict(user) if user else None
 
+def get_or_create_auth0_user(auth0_id, email, name):
+    """Get or create user from Auth0 credentials"""
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    # Add auth0_id column if it doesn't exist
+    c.execute('''
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS auth0_id TEXT UNIQUE
+    ''')
+
+    # Try to find existing user
+    c.execute('SELECT id, username FROM users WHERE auth0_id = ?', (auth0_id,))
+    user = c.fetchone()
+
+    if user:
+        conn.close()
+        return dict(user)
+
+    # Create new user if not found
+    try:
+        c.execute(
+            'INSERT INTO users (username, email, password_hash, auth0_id) VALUES (?, ?, ?, ?)',
+            (name, email, '', auth0_id)
+        )
+        conn.commit()
+
+        # Get the newly created user
+        c.execute('SELECT id, username FROM users WHERE auth0_id = ?', (auth0_id,))
+        user = c.fetchone()
+        conn.close()
+        return dict(user)
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None
+
 # Bucket operations
 def add_bucket(user_id, name, amount, bucket_type):
     conn = get_db_connection()

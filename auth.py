@@ -1,88 +1,119 @@
 import streamlit as st
 import database as db
+from authlib.integrations.requests_client import OAuth2Session
+import os
+import json
+from datetime import datetime, timedelta
+
+# Auth0 configuration
+AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
+AUTH0_CLIENT_SECRET = os.environ['AUTH0_CLIENT_SECRET']
+AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
+AUTH0_CALLBACK_URL = "http://localhost:5000/callback"  # Streamlit callback URL
 
 def init_session_state():
+    """Initialize session state variables"""
     if 'user' not in st.session_state:
         st.session_state.user = None
-    if 'show_register' not in st.session_state:
-        st.session_state.show_register = False
+    if 'auth_tokens' not in st.session_state:
+        st.session_state.auth_tokens = None
 
-def toggle_register():
-    st.session_state.show_register = not st.session_state.show_register
+def get_auth0_client():
+    """Create Auth0 OAuth2 client"""
+    return OAuth2Session(
+        client_id=AUTH0_CLIENT_ID,
+        client_secret=AUTH0_CLIENT_SECRET,
+        scope='openid profile email'
+    )
+
+def get_auth0_authorize_url():
+    """Get Auth0 authorization URL"""
+    client = get_auth0_client()
+    auth_url = f"https://{AUTH0_DOMAIN}/authorize"
+    return client.create_authorization_url(
+        auth_url,
+        redirect_uri=AUTH0_CALLBACK_URL
+    )[0]
+
+def handle_auth0_callback(code):
+    """Handle Auth0 callback and token exchange"""
+    client = get_auth0_client()
+    token_url = f"https://{AUTH0_DOMAIN}/oauth/token"
+    tokens = client.fetch_token(
+        token_url,
+        authorization_response=f"{AUTH0_CALLBACK_URL}?code={code}",
+        redirect_uri=AUTH0_CALLBACK_URL
+    )
+
+    # Get user info from Auth0
+    userinfo_url = f"https://{AUTH0_DOMAIN}/userinfo"
+    resp = client.get(userinfo_url)
+    userinfo = resp.json()
+
+    # Create or update user in database
+    user = db.get_or_create_auth0_user(
+        auth0_id=userinfo['sub'],
+        email=userinfo.get('email', ''),
+        name=userinfo.get('name', '')
+    )
+
+    return user, tokens
 
 def show_login_page():
+    """Display Auth0 login page"""
     st.title("Welcome to Personal Finance Manager")
 
-    # Login form
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
-
-        if submitted:
-            user = db.verify_user(username, password)
-            if user:
-                st.session_state.user = user
-                st.success("Login successful!")
-                st.rerun()
-            else:
-                st.error("Invalid username or password")
-
-    # Registration toggle button
-    #st.button("New User? Register Here", on_click=toggle_register)
-
-    # Registration section
-    if st.session_state.show_register:
-        st.markdown("---")
-        st.subheader("Register New Account")
-
-        with st.form("register_form"):
-            new_username = st.text_input("Choose Username")
-            new_email = st.text_input("Email")
-            new_password = st.text_input("Choose Password", type="password")
-            confirm_password = st.text_input("Confirm Password", type="password")
-            register_submitted = st.form_submit_button("Register")
-
-            if register_submitted:
-                if new_password != confirm_password:
-                    st.error("Passwords do not match")
-                elif not new_username or not new_email or not new_password:
-                    st.error("Please fill all fields")
-                else:
-                    if db.create_user(new_username, new_password, new_email):
-                        st.success("Registration successful! Please login.")
-                        st.session_state.show_register = False  # Hide registration form after successful registration
-                        st.rerun() # Rerun to reflect changes
-                    else:
-                        st.error("Username or email already exists")
-
-def show_logout_button():
-    # Add custom CSS for the logout button
+    # Center the login button with custom styling
     st.markdown("""
         <style>
-        .stButton > button {
-            border-radius: 20px !important;
-            padding: 8px 16px !important;
-            background-color: #f0f2f6 !important;
-            border: none !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
-            transition: all 0.2s ease;
-            width: 100%;
-            margin-top: 20px;
-            color: #262730 !important;
-            font-weight: 500 !important;
+        .auth0-login {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
         }
-        .stButton > button:hover {
-            background-color: #e0e2e6 !important;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
-            color: #0f1116 !important;
+        .auth0-button {
+            background-color: #635DFF;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .auth0-button:hover {
+            background-color: #4B45FF;
         }
         </style>
     """, unsafe_allow_html=True)
 
+    # Show login button
+    st.markdown(f"""
+        <div class="auth0-login">
+            <a href="{get_auth0_authorize_url()}" target="_self" class="auth0-button">
+                Login with Auth0
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Handle Auth0 callback
+    query_params = st.experimental_get_query_params()
+    if 'code' in query_params:
+        code = query_params['code'][0]
+        try:
+            user, tokens = handle_auth0_callback(code)
+            st.session_state.user = user
+            st.session_state.auth_tokens = tokens
+            st.rerun()
+        except Exception as e:
+            st.error(f"Authentication failed: {str(e)}")
+
+def show_logout_button():
+    """Display logout button in sidebar"""
     if st.sidebar.button("Logout"):
         st.session_state.user = None
+        st.session_state.auth_tokens = None
         st.rerun()
 
 def check_authentication():
+    """Check if user is authenticated"""
     return st.session_state.user is not None

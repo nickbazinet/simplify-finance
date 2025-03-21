@@ -2,3 +2,5 @@ streamlit>=1.0.0
 pandas>=1.3.0
 plotly>=5.0.0
 twilio>=7.0.0
+authlib
+requests
