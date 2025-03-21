@@ -28,14 +28,14 @@ jobs:
           pip install -r requirements.txt
           pip install pylint pyinstaller streamlit
 
-          #- name: Package Application (Ubuntu)
-          #if: runner.os == 'Linux'
-          #run: |
-          #pyinstaller --noconfirm --hidden-import=importlib.metadata --windowed --add-data="finance.db:." app.py
-          #mkdir release
-          #cp -r dist/app release/
-          #cp finance.db release/
-          #cd release && zip -r packaged_app-linux.zip * && cd ..
+      - name: Package Application (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          pyinstaller --noconfirm --hidden-import=importlib.metadata --windowed --add-data="finance.db:." app.py
+          mkdir release
+          cp dist/app release/
+          cp finance.db release/
+          cd release && zip -r packaged_app-linux.zip * && cd ..
 
       - name: Package Application (Windows)
         if: runner.os == 'Windows'
@@ -46,13 +46,13 @@ jobs:
           copy finance.db release\
           cd release && powershell Compress-Archive -Path * -DestinationPath packaged_app-windows.zip && cd ..
 
-          #- name: Upload Release Asset (Ubuntu)
-          # if: runner.os == 'Linux'
-          #uses: softprops/action-gh-release@v1
-          #with:
-          #files: release/packaged_app-linux.zip
-          #env:
-          #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Asset (Ubuntu)
+        if: runner.os == 'Linux'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/packaged_app-linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Release Asset (Windows)
         if: runner.os == 'Windows'
